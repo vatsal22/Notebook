@@ -35,6 +35,7 @@ using Windows.UI.Input.Inking.Analysis;
 using Windows.UI.Xaml.Shapes;
 using Windows.Storage.Streams;
 using Windows.Foundation;
+using Windows.UI.Xaml.Input;
 // End "Step 2: Use InkCanvas to support basic inking"
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -86,6 +87,13 @@ namespace GettingStarted_Ink
             drawingAttributes.IgnorePressure = false;
             drawingAttributes.FitToCurve = true;
             canvas.InkPresenter.UpdateDefaultDrawingAttributes(drawingAttributes);
+        }
+
+        private void objectManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
+        {
+            var stackDragged = e.OriginalSource as StackPanel;
+            (stackDragged.RenderTransform as TranslateTransform).X += e.Delta.Translation.X;
+            (stackDragged.RenderTransform as TranslateTransform).Y += e.Delta.Translation.Y;
         }
 
     }

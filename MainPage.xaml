@@ -37,6 +37,7 @@ THE SOFTWARE.
             </Grid.RowDefinitions>
 
 
+            
         <Canvas x:Name="ShapesCanvas" Grid.ColumnSpan="2" />
 
         <ScrollViewer  ZoomMode="Enabled" MinZoomFactor="1" 
@@ -67,6 +68,24 @@ THE SOFTWARE.
             </Border>-->
 
         </ScrollViewer>
+
+        <StackPanel BorderThickness="1" BorderBrush="Black" x:Name="bigStack">
+            <StackPanel x:Name="smallStack1" ManipulationMode="All" ManipulationDelta="objectManipulationDelta" >
+                <StackPanel.RenderTransform>
+                    <TranslateTransform />
+                </StackPanel.RenderTransform>
+                <TextBlock Text="John Doe"/>
+                <TextBlock Text="CEO"/>
+            </StackPanel>
+            <StackPanel x:Name="smallStack2" ManipulationMode="All" ManipulationDelta="objectManipulationDelta" >
+                <StackPanel.RenderTransform>
+                    <TranslateTransform />
+                </StackPanel.RenderTransform>
+                <InkToolbar x:Name="inkToolbar"
+          VerticalAlignment="Top"
+          TargetInkCanvas="{x:Bind inkCanvas}" />
+            </StackPanel>
+        </StackPanel>
 
     </Grid>
         <!--<InkCanvas x:Name="inkCanvas" />-->
