@@ -40,18 +40,18 @@ THE SOFTWARE.
             
         <Canvas x:Name="ShapesCanvas" Grid.ColumnSpan="2" />
 
-        <ScrollViewer  ZoomMode="Enabled" MinZoomFactor="1" 
+        <ScrollViewer  ZoomMode="Enabled" MinZoomFactor="0.5" 
                       MaxZoomFactor="7" VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Auto">
             <Grid Background="AliceBlue">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"></ColumnDefinition>
-                    <ColumnDefinition Width="250"></ColumnDefinition>
+                    <ColumnDefinition Width="600"></ColumnDefinition>
                     <ColumnDefinition Width="1*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="1*"/>
-                    <RowDefinition Height="350"/>
+                    <RowDefinition Height="800"/>
                     <RowDefinition Height="1*"/>
 
                 </Grid.RowDefinitions>
@@ -69,23 +69,15 @@ THE SOFTWARE.
 
         </ScrollViewer>
 
-        <StackPanel BorderThickness="1" BorderBrush="Black" x:Name="bigStack">
-            <StackPanel x:Name="smallStack1" ManipulationMode="All" ManipulationDelta="objectManipulationDelta" >
-                <StackPanel.RenderTransform>
-                    <TranslateTransform />
-                </StackPanel.RenderTransform>
-                <TextBlock Text="John Doe"/>
-                <TextBlock Text="CEO"/>
-            </StackPanel>
-            <StackPanel x:Name="smallStack2" ManipulationMode="All" ManipulationDelta="objectManipulationDelta" >
-                <StackPanel.RenderTransform>
-                    <TranslateTransform />
-                </StackPanel.RenderTransform>
-                <InkToolbar x:Name="inkToolbar"
+        <StackPanel x:Name="draggableToolbar" ManipulationMode="All" ManipulationDelta="objectManipulationDelta" >
+            <StackPanel.RenderTransform>
+                <TranslateTransform />
+            </StackPanel.RenderTransform>
+            <InkToolbar x:Name="inkToolbar"
           VerticalAlignment="Top"
           TargetInkCanvas="{x:Bind inkCanvas}" />
-            </StackPanel>
         </StackPanel>
+
 
     </Grid>
         <!--<InkCanvas x:Name="inkCanvas" />-->
