@@ -25,7 +25,7 @@ THE SOFTWARE.
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     x:Name="Main"
     mc:Ignorable="d">
-        <Grid Background="AliceBlue">
+        <Grid Background="Pink">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*"></ColumnDefinition>
 
@@ -38,9 +38,8 @@ THE SOFTWARE.
 
 
             
-        <Canvas x:Name="ShapesCanvas" Grid.ColumnSpan="2" />
 
-        <ScrollViewer  ZoomMode="Enabled" MinZoomFactor="0.5" 
+        <ScrollViewer  ZoomMode="Enabled" MinZoomFactor="1" 
                       MaxZoomFactor="7" VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Auto">
             <Grid Background="AliceBlue">
@@ -57,12 +56,30 @@ THE SOFTWARE.
                 </Grid.RowDefinitions>
 
                 <Border Grid.Row="1" Grid.Column="1" BorderThickness="2" Background="Azure" BorderBrush="Black">
-                    <InkCanvas x:Name="inkCanvas" Loaded="InkCanvas_Loaded"/>
+                    <InkCanvas x:Name="inkCanvas" />
 
                 </Border>
-            </Grid>
- 
 
+                <Button Grid.Row="1"
+                        Grid.Column="2"
+                        HorizontalAlignment="Center"
+                        Width="200"
+                        Height="200"
+                        FontSize="150"
+                        FontStretch="Normal"
+                        x:Name="button_next" Content="->" Click="button_next_click">
+                </Button>
+                <Button Grid.Row="1"
+                        Grid.Column="0"
+                        HorizontalAlignment="Center"
+                        Width="200"
+                        Height="200"
+                        FontSize="150"
+                        FontStretch="Normal"
+                        x:Name="button_prev" Content="&lt;-" Click="button_prev_click">
+                </Button>
+
+            </Grid>
             <!--<Border BorderBrush="AliceBlue" BorderThickness="2" Width="20" >
                 <InkCanvas x:Name="inkCanvas" Loaded="InkCanvas_Loaded"/>
             </Border>-->
