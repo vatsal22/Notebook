@@ -36,13 +36,13 @@ THE SOFTWARE.
 
             </Grid.RowDefinitions>
 
-
+   
             
 
         <ScrollViewer  ZoomMode="Enabled" MinZoomFactor="1" 
                       MaxZoomFactor="7" VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Auto">
-            <Grid Background="AliceBlue">
+            <Grid x:Name="RenderedGrid" Background="AliceBlue">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"></ColumnDefinition>
                     <ColumnDefinition Width="600"></ColumnDefinition>
@@ -55,7 +55,7 @@ THE SOFTWARE.
 
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="1" Grid.Column="1" BorderThickness="2" Background="Azure" BorderBrush="Black">
+                <Border  x:Name="_Border" Grid.Row="1" Grid.Column="1" BorderThickness="2" Background="Azure" BorderBrush="Black">
                     <InkCanvas x:Name="inkCanvas" />
 
                 </Border>
@@ -85,6 +85,8 @@ THE SOFTWARE.
             </Border>-->
 
         </ScrollViewer>
+        <Image Height="800" Width="600" Grid.Row="0" Grid.Column="0" x:Name="RenderedImage" Stretch="None" 
+               />
 
         <StackPanel x:Name="draggableToolbar" ManipulationMode="All" ManipulationDelta="objectManipulationDelta" >
             <StackPanel.RenderTransform>
@@ -94,6 +96,8 @@ THE SOFTWARE.
           VerticalAlignment="Top"
           TargetInkCanvas="{x:Bind inkCanvas}" />
         </StackPanel>
+
+        <Button x:Name="switchPage" Content="SwitchPAGE" Click="PrintButtonClick"></Button>
 
 
     </Grid>

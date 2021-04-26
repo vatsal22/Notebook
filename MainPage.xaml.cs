@@ -36,6 +36,17 @@ using Windows.UI.Xaml.Shapes;
 using Windows.Storage.Streams;
 using Windows.Foundation;
 using Windows.UI.Xaml.Input;
+using Windows.Storage;
+using System.Threading.Tasks;
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Printing;
+using Windows.Graphics.Printing;
+using Windows.ApplicationModel.Core;
+using Windows.UI.Core;
+using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.Graphics.Imaging;
+using Windows.Graphics.Display;
 // End "Step 2: Use InkCanvas to support basic inking"
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -67,10 +78,22 @@ namespace GettingStarted_Ink
 
         int cur_page = 0;
         int last_page = 0;
+        // Use cur_page.toString() + page_file_name
+        string page_file_name = "_Page.gif";
+        public static InkCanvas _inkCanvas;
+        public static Grid _renderedGrid;
+        public Grid _Grid;
 
+        private PrintManager printMan;
+        private PrintDocument printDoc;
+        private IPrintDocumentSource printDocSource;
+        
         public MainPage()
         {
             this.InitializeComponent();
+
+            _inkCanvas = inkCanvas;
+            _renderedGrid = RenderedGrid;
 
             // Begin "Step 3: Support inking with touch and mouse"
             inkCanvas.InkPresenter.InputDeviceTypes =
@@ -78,6 +101,32 @@ namespace GettingStarted_Ink
                     Windows.UI.Core.CoreInputDeviceTypes.Pen;
             // End "Step 3: Support inking with touch and mouse"
 
+            save_ink("blank.gif"); // create a blank file to create new pages later
+
+
+            Windows.Storage.StorageFolder storageFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+
+            IReadOnlyList<StorageFile> files=
+                            Task.Run(async () =>
+                            {
+                                return await storageFolder.GetFilesAsync();
+                            }).GetAwaiter().GetResult();
+
+
+            int num_pages = 0;
+            foreach (var file in files)
+            {
+                // TODO should check that it starts with number and no missing pages (e.g. 0,1,3...)
+                if (file.Name.EndsWith(page_file_name)) num_pages++;
+            }
+
+            if (num_pages>0)
+            {
+                last_page = num_pages - 1;
+
+                // load 0_Page.gif
+                load_ink(cur_page.ToString() + page_file_name);
+            } // else last_page=0, which is the current blank page
 
         }
 
@@ -92,7 +141,7 @@ namespace GettingStarted_Ink
 
         private void button_next_click(object sender, RoutedEventArgs e)
         {
-            save_ink(cur_page.ToString() + ".gif");
+            save_ink(cur_page.ToString() + page_file_name);
             cur_page++;
 
             if (cur_page > last_page)
@@ -102,7 +151,7 @@ namespace GettingStarted_Ink
             }
             else
             {
-                load_ink(cur_page.ToString() + ".gif");
+                load_ink(cur_page.ToString() + page_file_name);
 
             }
         }
@@ -112,9 +161,9 @@ namespace GettingStarted_Ink
 
             if (cur_page != 0)
             {
-                save_ink(cur_page.ToString() + ".gif");
+                save_ink(cur_page.ToString() + page_file_name);
                 cur_page--;
-                load_ink(cur_page.ToString() + ".gif");
+                load_ink(cur_page.ToString() + page_file_name);
 
 
             }
@@ -187,7 +236,197 @@ namespace GettingStarted_Ink
             }
         }
 
-        
+        private async void switchPage_Click(object sender, RoutedEventArgs e)
+        {
+
+            RenderTargetBitmap renderTargetBitmap = new RenderTargetBitmap();
+
+            await renderTargetBitmap.RenderAsync(inkCanvas);
+
+            RenderedImage.Source = renderTargetBitmap;
+
+
+
+            //this.Frame.Navigate(typeof(BlankPage1));
+
+        }
+
+        #region Register for printing
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            // Register for PrintTaskRequested event
+            printMan = PrintManager.GetForCurrentView();
+            printMan.PrintTaskRequested += PrintTaskRequested;
+
+            // Build a PrintDocument and register for callbacks
+            printDoc = new PrintDocument();
+            printDocSource = printDoc.DocumentSource;
+            printDoc.Paginate += Paginate;
+            printDoc.GetPreviewPage += GetPreviewPage;
+            printDoc.AddPages += AddPages;
+        }
+
+        #endregion
+
+        #region Showing the print dialog
+
+        private async Task<BitmapImage> ConvertToBitmapImage(RenderTargetBitmap renderTargetBitmap)
+        {
+            var pixels = await renderTargetBitmap.GetPixelsAsync();
+
+            var stream = pixels.AsStream();
+
+            var outStream = new InMemoryRandomAccessStream();
+
+            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, outStream);
+
+            var displayInformation = DisplayInformation.GetForCurrentView();
+
+            encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, (uint)renderTargetBitmap.PixelWidth, (uint)renderTargetBitmap.PixelHeight, displayInformation.RawDpiX, displayInformation.RawDpiY, pixels.ToArray());
+
+            await encoder.FlushAsync();
+            outStream.Seek(0);
+
+            var bitmap = new BitmapImage();
+            await bitmap.SetSourceAsync(outStream);
+
+            return bitmap;
+        }
+
+        private async void PrintButtonClick(object sender, RoutedEventArgs e)
+        {
+
+
+            var renderTargetBitmap = new RenderTargetBitmap();
+            await renderTargetBitmap.RenderAsync(_Border);
+
+            var bitmapImage = await ConvertToBitmapImage(renderTargetBitmap);
+
+            var grid = new Grid
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+
+            var image = new Image
+            {
+                Source = bitmapImage,
+                Stretch = Windows.UI.Xaml.Media.Stretch.Uniform,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            grid.Children.Add(image);
+
+            _Grid = grid; 
+
+            //RenderTargetBitmap renderTargetBitmap = new RenderTargetBitmap();
+
+            //await renderTargetBitmap.RenderAsync(inkCanvas, 600, 800);
+
+            //RenderedImage.Source = renderTargetBitmap;
+
+
+            if (PrintManager.IsSupported())
+            {
+                try
+                {
+                    // Show print UI
+                    await PrintManager.ShowPrintUIAsync();
+                }
+                catch
+                {
+                    // Printing cannot proceed at this time
+                    ContentDialog noPrintingDialog = new ContentDialog()
+                    {
+                        Title = "Printing error",
+                        Content = "\nSorry, printing can' t proceed at this time.",
+                        PrimaryButtonText = "OK"
+                    };
+                    await noPrintingDialog.ShowAsync();
+                }
+            }
+            else
+            {
+                // Printing is not supported on this device
+                ContentDialog noPrintingDialog = new ContentDialog()
+                {
+                    Title = "Printing not supported",
+                    Content = "\nSorry, printing is not supported on this device.",
+                    PrimaryButtonText = "OK"
+                };
+                await noPrintingDialog.ShowAsync();
+            }
+        }
+
+        private void PrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs args)
+        {
+            // Create the PrintTask.
+            // Defines the title and delegate for PrintTaskSourceRequested
+            var printTask = args.Request.CreatePrintTask("Print", PrintTaskSourceRequrested);
+
+            // Handle PrintTask.Completed to catch failed print jobs
+            printTask.Completed += PrintTaskCompleted;
+        }
+
+        private void PrintTaskSourceRequrested(PrintTaskSourceRequestedArgs args)
+        {
+            // Set the document source.
+            args.SetSource(printDocSource);
+        }
+
+        #endregion
+
+        #region Print preview
+
+        private void Paginate(object sender, PaginateEventArgs e)
+        {
+            // As I only want to print one Rectangle, so I set the count to 1
+            printDoc.SetPreviewPageCount(1, PreviewPageCountType.Final);
+        }
+
+        private void GetPreviewPage(object sender, GetPreviewPageEventArgs e)
+        {
+            // Provide a UIElement as the print preview.
+            printDoc.SetPreviewPage(e.PageNumber, _Grid);
+        }
+
+        #endregion
+
+        #region Add pages to send to the printer
+
+        private void AddPages(object sender, AddPagesEventArgs e)
+        {
+            printDoc.AddPage(_Grid);
+
+            // Indicate that all of the print pages have been provided
+            printDoc.AddPagesComplete();
+        }
+
+        #endregion
+
+        #region Print task completed
+
+        private async void PrintTaskCompleted(PrintTask sender, PrintTaskCompletedEventArgs args)
+        {
+            // Notify the user when the print operation fails.
+            if (args.Completion == PrintTaskCompletion.Failed)
+            {
+                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+                {
+                    ContentDialog noPrintingDialog = new ContentDialog()
+                    {
+                        Title = "Printing error",
+                        Content = "\nSorry, failed to print.",
+                        PrimaryButtonText = "OK"
+                    };
+                    await noPrintingDialog.ShowAsync();
+                });
+            }
+        }
+
+        #endregion
+
     }
 
 }

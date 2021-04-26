@@ -1,0 +1,21 @@
+﻿<Page
+    x:Class="GettingStarted_Ink.BlankPage1"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:GettingStarted_Ink"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+        <Button HorizontalAlignment="Center" Click="PrintButtonClick">Print</Button>
+        <InkCanvas Grid.Row="1" x:Name="RectangleToPrint" />
+        <Image x:Name="RenderedImage" Stretch="None"/>
+        <CheckBox Content="CheckBox" Margin="1040,0,0,0" Grid.Row="1"/>
+    </Grid>
+</Page>
