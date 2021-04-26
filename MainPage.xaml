@@ -45,7 +45,7 @@ THE SOFTWARE.
             <Grid x:Name="RenderedGrid" Background="AliceBlue">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"></ColumnDefinition>
-                    <ColumnDefinition Width="600"></ColumnDefinition>
+                    <ColumnDefinition Width="620"></ColumnDefinition>
                     <ColumnDefinition Width="1*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
@@ -56,7 +56,11 @@ THE SOFTWARE.
                 </Grid.RowDefinitions>
 
                 <Border  x:Name="_Border" Grid.Row="1" Grid.Column="1" BorderThickness="2" Background="Azure" BorderBrush="Black">
-                    <InkCanvas x:Name="inkCanvas" />
+                    <Grid>
+                        <InkCanvas x:Name="inkCanvas2" />
+                        <InkCanvas x:Name="inkCanvas" />
+
+                    </Grid>
 
                 </Border>
 

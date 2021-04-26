@@ -47,6 +47,7 @@ using Windows.UI.Core;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Imaging;
 using Windows.Graphics.Display;
+using GettingStarted_Ink.Tools;
 // End "Step 2: Use InkCanvas to support basic inking"
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -84,13 +85,17 @@ namespace GettingStarted_Ink
         public static Grid _renderedGrid;
         public Grid _Grid;
 
-        private PrintManager printMan;
-        private PrintDocument printDoc;
-        private IPrintDocumentSource printDocSource;
-        
+
+
+        private PrintHelper printHelper;
+        private BitMapHelper bitMapHelper;
+
         public MainPage()
         {
             this.InitializeComponent();
+
+            printHelper = new PrintHelper();
+            bitMapHelper = new BitMapHelper();
 
             _inkCanvas = inkCanvas;
             _renderedGrid = RenderedGrid;
@@ -251,74 +256,29 @@ namespace GettingStarted_Ink
 
         }
 
-        #region Register for printing
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            // Register for PrintTaskRequested event
-            printMan = PrintManager.GetForCurrentView();
-            printMan.PrintTaskRequested += PrintTaskRequested;
+            printHelper.register();
 
-            // Build a PrintDocument and register for callbacks
-            printDoc = new PrintDocument();
-            printDocSource = printDoc.DocumentSource;
-            printDoc.Paginate += Paginate;
-            printDoc.GetPreviewPage += GetPreviewPage;
-            printDoc.AddPages += AddPages;
         }
 
-        #endregion
-
-        #region Showing the print dialog
-
-        private async Task<BitmapImage> ConvertToBitmapImage(RenderTargetBitmap renderTargetBitmap)
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            var pixels = await renderTargetBitmap.GetPixelsAsync();
+            printHelper.unregister();
 
-            var stream = pixels.AsStream();
-
-            var outStream = new InMemoryRandomAccessStream();
-
-            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, outStream);
-
-            var displayInformation = DisplayInformation.GetForCurrentView();
-
-            encoder.SetPixelData(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Ignore, (uint)renderTargetBitmap.PixelWidth, (uint)renderTargetBitmap.PixelHeight, displayInformation.RawDpiX, displayInformation.RawDpiY, pixels.ToArray());
-
-            await encoder.FlushAsync();
-            outStream.Seek(0);
-
-            var bitmap = new BitmapImage();
-            await bitmap.SetSourceAsync(outStream);
-
-            return bitmap;
         }
 
         private async void PrintButtonClick(object sender, RoutedEventArgs e)
         {
 
+            printHelper.ResetElements();
+            printHelper.AddElement(await bitMapHelper.UIElementToGridImage(_Border));
 
-            var renderTargetBitmap = new RenderTargetBitmap();
-            await renderTargetBitmap.RenderAsync(_Border);
+            
 
-            var bitmapImage = await ConvertToBitmapImage(renderTargetBitmap);
-
-            var grid = new Grid
-            {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch
-            };
-
-            var image = new Image
-            {
-                Source = bitmapImage,
-                Stretch = Windows.UI.Xaml.Media.Stretch.Uniform,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch
-            };
-            grid.Children.Add(image);
-
-            _Grid = grid; 
+            load_ink("1" + page_file_name);
+            printHelper.AddElement(await bitMapHelper.UIElementToGridImage(_Border));
 
             //RenderTargetBitmap renderTargetBitmap = new RenderTargetBitmap();
 
@@ -326,106 +286,10 @@ namespace GettingStarted_Ink
 
             //RenderedImage.Source = renderTargetBitmap;
 
-
-            if (PrintManager.IsSupported())
-            {
-                try
-                {
-                    // Show print UI
-                    await PrintManager.ShowPrintUIAsync();
-                }
-                catch
-                {
-                    // Printing cannot proceed at this time
-                    ContentDialog noPrintingDialog = new ContentDialog()
-                    {
-                        Title = "Printing error",
-                        Content = "\nSorry, printing can' t proceed at this time.",
-                        PrimaryButtonText = "OK"
-                    };
-                    await noPrintingDialog.ShowAsync();
-                }
-            }
-            else
-            {
-                // Printing is not supported on this device
-                ContentDialog noPrintingDialog = new ContentDialog()
-                {
-                    Title = "Printing not supported",
-                    Content = "\nSorry, printing is not supported on this device.",
-                    PrimaryButtonText = "OK"
-                };
-                await noPrintingDialog.ShowAsync();
-            }
+            printHelper.showDialog();
+            
         }
 
-        private void PrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs args)
-        {
-            // Create the PrintTask.
-            // Defines the title and delegate for PrintTaskSourceRequested
-            var printTask = args.Request.CreatePrintTask("Print", PrintTaskSourceRequrested);
-
-            // Handle PrintTask.Completed to catch failed print jobs
-            printTask.Completed += PrintTaskCompleted;
-        }
-
-        private void PrintTaskSourceRequrested(PrintTaskSourceRequestedArgs args)
-        {
-            // Set the document source.
-            args.SetSource(printDocSource);
-        }
-
-        #endregion
-
-        #region Print preview
-
-        private void Paginate(object sender, PaginateEventArgs e)
-        {
-            // As I only want to print one Rectangle, so I set the count to 1
-            printDoc.SetPreviewPageCount(1, PreviewPageCountType.Final);
-        }
-
-        private void GetPreviewPage(object sender, GetPreviewPageEventArgs e)
-        {
-            // Provide a UIElement as the print preview.
-            printDoc.SetPreviewPage(e.PageNumber, _Grid);
-        }
-
-        #endregion
-
-        #region Add pages to send to the printer
-
-        private void AddPages(object sender, AddPagesEventArgs e)
-        {
-            printDoc.AddPage(_Grid);
-
-            // Indicate that all of the print pages have been provided
-            printDoc.AddPagesComplete();
-        }
-
-        #endregion
-
-        #region Print task completed
-
-        private async void PrintTaskCompleted(PrintTask sender, PrintTaskCompletedEventArgs args)
-        {
-            // Notify the user when the print operation fails.
-            if (args.Completion == PrintTaskCompletion.Failed)
-            {
-                await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
-                {
-                    ContentDialog noPrintingDialog = new ContentDialog()
-                    {
-                        Title = "Printing error",
-                        Content = "\nSorry, failed to print.",
-                        PrimaryButtonText = "OK"
-                    };
-                    await noPrintingDialog.ShowAsync();
-                });
-            }
-        }
-
-        #endregion
 
     }
 
