@@ -48,6 +48,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Graphics.Imaging;
 using Windows.Graphics.Display;
 using GettingStarted_Ink.Tools;
+using System.Threading;
 // End "Step 2: Use InkCanvas to support basic inking"
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
@@ -146,18 +147,18 @@ namespace GettingStarted_Ink
 
         private void button_next_click(object sender, RoutedEventArgs e)
         {
-            save_ink(cur_page.ToString() + page_file_name);
-            cur_page++;
 
-            if (cur_page > last_page)
+
+
+            if (cur_page == last_page)
             {
                 last_page++;
+                cur_page++;
                 load_ink("blank.gif");
             }
             else
             {
-                load_ink(cur_page.ToString() + page_file_name);
-
+                go_to_page(cur_page + 1);
             }
         }
 
@@ -166,14 +167,22 @@ namespace GettingStarted_Ink
 
             if (cur_page != 0)
             {
-                save_ink(cur_page.ToString() + page_file_name);
-                cur_page--;
-                load_ink(cur_page.ToString() + page_file_name);
+                go_to_page(cur_page - 1);
 
 
             }
         }
 
+        private void go_to_page(int i)
+        {
+            save_ink(cur_page.ToString() + page_file_name);
+
+            if (cur_page == i) return;
+
+            cur_page = i;
+            load_ink(cur_page.ToString() + page_file_name);
+
+        }
 
         private async void save_ink(string file_name)
         {
@@ -273,21 +282,34 @@ namespace GettingStarted_Ink
         {
 
             printHelper.ResetElements();
-            printHelper.AddElement(await bitMapHelper.UIElementToGridImage(_Border));
 
-            
 
-            load_ink("1" + page_file_name);
-            printHelper.AddElement(await bitMapHelper.UIElementToGridImage(_Border));
+            //save_ink(cur_page.ToString() + page_file_name);
 
-            //RenderTargetBitmap renderTargetBitmap = new RenderTargetBitmap();
+            for (int i = 0; i <= last_page; i++)
+            {
+                go_to_page(i);
+                Task.Delay(1000).Wait();
 
-            //await renderTargetBitmap.RenderAsync(inkCanvas, 600, 800);
+                printHelper.AddElement(await bitMapHelper.UIElementToGridImage(_PageCanvas));
 
-            //RenderedImage.Source = renderTargetBitmap;
+            }
+
+
+
+
+
+            // load/iterate through each page to capture the
+            // pngs we need to print
+
+
+
+
 
             printHelper.showDialog();
-            
+
+
+
         }
 
 

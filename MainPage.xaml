@@ -55,8 +55,8 @@ THE SOFTWARE.
 
                 </Grid.RowDefinitions>
 
-                <Border  x:Name="_Border" Grid.Row="1" Grid.Column="1" BorderThickness="2" Background="Azure" BorderBrush="Black">
-                    <Grid>
+                <Border  x:Name="_PageCanvas" Grid.Row="1" Grid.Column="1" BorderThickness="2" Background="Azure" BorderBrush="Black">
+                    <Grid x:Name="_Grid">
                         <InkCanvas x:Name="inkCanvas2" />
                         <InkCanvas x:Name="inkCanvas" />
 
