@@ -18,7 +18,7 @@ namespace GettingStarted_Ink.Models
         private bool deleted = false; 
 
 
-        Grid _grid;
+        public Grid _grid { get; set; }
         
         // 0 indexed 
         // "Normal" Pages: >=0
@@ -82,7 +82,7 @@ namespace GettingStarted_Ink.Models
             string file_name = _pageID.ToString() + page_file_name;
 
             Windows.Storage.StorageFolder storageFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
-            Windows.Storage.StorageFile file = await storageFolder.CreateFileAsync(file_name, Windows.Storage.CreationCollisionOption.ReplaceExisting);
+            Windows.Storage.StorageFile file = await storageFolder.GetFileAsync(file_name);
 
 
             // When selected, picker returns a reference to the file.

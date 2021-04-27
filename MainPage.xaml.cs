@@ -65,6 +65,8 @@ namespace GettingStarted_Ink
             printHelper = new PrintHelper();
             bitMapHelper = new BitMapHelper();
 
+            pageBuffers = new List<InkPage>();
+
             _inkCanvas = inkCanvas;
             _renderedGrid = RenderedGrid;
 
@@ -74,43 +76,7 @@ namespace GettingStarted_Ink
                     Windows.UI.Core.CoreInputDeviceTypes.Pen;
             // End "Step 3: Support inking with touch and mouse"
 
-            save_ink("blank.gif"); // create a blank file to create new pages later
-
-
-            Windows.Storage.StorageFolder storageFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
-
-            IReadOnlyList<StorageFile> files =
-                            Task.Run(async () =>
-                            {
-                                return await storageFolder.GetFilesAsync();
-                            }).GetAwaiter().GetResult();
-
-
-            int num_pages = 0;
-            foreach (var file in files)
-            {
-                // TODO should check that it starts with number and no missing pages (e.g. 0,1,3...)
-
-
-
-
-                if (file.Name.EndsWith(page_file_name))
-                {
-                    int pageID = int.Parse(file.Name.Split('_')[0]);
-                    InkPage ip = new InkPage(pageID);
-                    ip.loadAsync().GetAwaiter().GetResult();
-                    pageBuffers.Add(ip);
-
-                }
-            }
-
-            if (pageBuffers.Count > 0)
-            {
-                last_page = num_pages - 1;
-
-                // load 0_Page.gif
-                load_ink(cur_page.ToString() + page_file_name);
-            } // else last_page=0, which is the current blank page
+   
 
         }
 
@@ -173,9 +139,13 @@ namespace GettingStarted_Ink
             foreach (Task task in tasks) await task;
         }
 
-        private async void replaceCanvas(Canvas canvas)
+        private async void replaceCanvas()
         {
-                // TODO use buffers to replace actual displayed canvas
+            // TODO use buffers to replace actual displayed canvas
+            _PageCanvas.Children.Clear();
+            _PageCanvas.Children.Add(pageBuffers[0]._grid);
+
+
         }
 
         private async void save_ink(string file_name)
@@ -260,9 +230,50 @@ namespace GettingStarted_Ink
         }
 
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             printHelper.register();
+
+            save_ink("blank.gif"); // create a blank file to create new pages later
+
+
+            Windows.Storage.StorageFolder storageFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+
+            IReadOnlyList<StorageFile> files =
+                            Task.Run(async () =>
+                            {
+                                return await storageFolder.GetFilesAsync();
+                            }).GetAwaiter().GetResult();
+
+
+            int num_pages = 0;
+            foreach (var file in files)
+            {
+                // TODO should check that it starts with number and no missing pages (e.g. 0,1,3...)
+
+
+
+
+                if (file.Name.EndsWith(page_file_name))
+                {
+                    int pageID = int.Parse(file.Name.Split('_')[0]);
+                    InkPage ip = new InkPage(pageID);
+                    await ip.loadAsync();
+                    pageBuffers.Add(ip);
+
+                }
+            }
+
+            if (pageBuffers.Count > 0)
+            {
+                last_page = num_pages - 1;
+
+
+                replaceCanvas();
+                // load 0_Page.gif
+                // load_ink(cur_page.ToString() + page_file_name);
+            } // else last_page=0, which is the current blank page
+
 
         }
 
