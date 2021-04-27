@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Graphics.Display;
 using Windows.Graphics.Imaging;
+using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -15,9 +16,35 @@ namespace GettingStarted_Ink.Tools
 {
     class BitMapHelper
     {
+
+
+        private async Task<bool> RenderGridAsync(Grid mainGrid)
+        {
+
+            RenderTargetBitmap rtb = new RenderTargetBitmap();
+            await rtb.RenderAsync(mainGrid);
+
+            var pixelBuffer = await rtb.GetPixelsAsync();
+            var pixels = pixelBuffer.ToArray();
+            var displayInformation = DisplayInformation.GetForCurrentView();
+            var file = await ApplicationData.Current.LocalFolder.CreateFileAsync("CurrentImage" + ".png", CreationCollisionOption.ReplaceExisting);
+            using (var stream = await file.OpenAsync(FileAccessMode.ReadWrite))
+            {
+                var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
+                encoder.SetPixelData(BitmapPixelFormat.Bgra8,
+                                     BitmapAlphaMode.Premultiplied,
+                                     (uint)rtb.PixelWidth,
+                                     (uint)rtb.PixelHeight,
+                                     displayInformation.RawDpiX,
+                                     displayInformation.RawDpiY,
+                                     pixels);
+                await encoder.FlushAsync();
+            }
+        }
+
         // Given a UI element, converts to a RenderTargetBitmap -> regular PNG
         // Sizes the PNG according to the element + screen size
-        // Appends the png Image as a child to a Grid for convenience.
+        // Appends the png Image as a child to a Grid for convenience
 
         public async Task<Grid> UIElementToGridImage (UIElement element)
         {

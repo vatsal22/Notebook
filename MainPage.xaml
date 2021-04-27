@@ -59,9 +59,7 @@ THE SOFTWARE.
 
                 <Grid  x:Name="_PageCanvas"
                        Grid.Row="1" Grid.Column="1"
-                           BorderBrush="Black" BorderThickness="1"
-                           Background="Beige">
-                        <InkCanvas x:Name="inkCanvas2" />
+                          >
                         <InkCanvas x:Name="inkCanvas" />
 
                     </Grid>
@@ -100,7 +98,7 @@ THE SOFTWARE.
             </StackPanel.RenderTransform>
             <InkToolbar x:Name="inkToolbar"
           VerticalAlignment="Top"
-          TargetInkCanvas="{x:Bind inkCanvas}" />
+           />
         </StackPanel>
 
         <Button x:Name="switchPage" Content="SwitchPAGE" Click="PrintButtonClick"></Button>

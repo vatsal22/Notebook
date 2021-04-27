@@ -96,6 +96,7 @@
     </Compile>
     <Compile Include="Models\InkPage.cs" />
     <Compile Include="Tools\BitMapHelper.cs" />
+    <Compile Include="Tools\AsyncHelpers.cs" />
     <Compile Include="Tools\PrintHelper.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>

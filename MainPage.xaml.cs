@@ -2,6 +2,7 @@
 using GettingStarted_Ink.Models;
 using GettingStarted_Ink.Tools;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -28,6 +29,7 @@ namespace GettingStarted_Ink
 
 
 
+    
 
     public sealed partial class MainPage : Page
     {
@@ -51,12 +53,17 @@ namespace GettingStarted_Ink
         public static InkCanvas _inkCanvas;
         public static Grid _renderedGrid;
 
-
+        
 
         private PrintHelper printHelper;
         private BitMapHelper bitMapHelper;
 
-        private List<InkPage> pageBuffers;
+        // TODO should limit this to ~20. Too many pages 
+        // might make things slow. 
+        // Idea: Use simple int array to keep track of 
+        // available pages. Use LRU or MRU to shift buffers.
+        private SortedList<int , InkPage> pageBuffers;
+
 
         public MainPage()
         {
@@ -65,7 +72,9 @@ namespace GettingStarted_Ink
             printHelper = new PrintHelper();
             bitMapHelper = new BitMapHelper();
 
-            pageBuffers = new List<InkPage>();
+            var comparer = (Comparer<InkPage>) new InkPageComparer();
+            
+            pageBuffers = new SortedList<int, InkPage>();
 
             _inkCanvas = inkCanvas;
             _renderedGrid = RenderedGrid;
@@ -91,14 +100,12 @@ namespace GettingStarted_Ink
 
         private void button_next_click(object sender, RoutedEventArgs e)
         {
-
-
-
             if (cur_page == last_page)
             {
-                last_page++;
-                cur_page++;
-                load_ink("blank.gif");
+                last_page++; 
+
+                pageBuffers.Add(last_page,new InkPage(last_page));
+                go_to_page(last_page);
             }
             else
             {
@@ -119,12 +126,8 @@ namespace GettingStarted_Ink
 
         private void go_to_page(int i)
         {
-            save_ink(cur_page.ToString() + page_file_name);
-
-            if (cur_page == i) return;
-
             cur_page = i;
-            load_ink(cur_page.ToString() + page_file_name);
+            replaceCanvas(pageBuffers[i]);
 
         }
 
@@ -134,17 +137,16 @@ namespace GettingStarted_Ink
             List<Task> tasks = new List<Task>(); 
             foreach (var inkPage in pageBuffers)
             {
-                tasks.Add(inkPage.saveAsync());
+                tasks.Add(inkPage.Value.saveAsync());
             }
             foreach (Task task in tasks) await task;
         }
 
-        private async void replaceCanvas()
+        private void replaceCanvas(InkPage inkPage)
         {
-            // TODO use buffers to replace actual displayed canvas
             _PageCanvas.Children.Clear();
-            _PageCanvas.Children.Add(pageBuffers[0]._grid);
-
+            _PageCanvas.Children.Add(inkPage._grid);
+            inkToolbar.TargetInkCanvas = inkPage.GetInkCanvas();
 
         }
 
@@ -246,11 +248,12 @@ namespace GettingStarted_Ink
                             }).GetAwaiter().GetResult();
 
 
-            int num_pages = 0;
+            List<Task> tasks = new List<Task>();
+
+            int numPages = 0;
             foreach (var file in files)
             {
                 // TODO should check that it starts with number and no missing pages (e.g. 0,1,3...)
-
 
 
 
@@ -258,21 +261,32 @@ namespace GettingStarted_Ink
                 {
                     int pageID = int.Parse(file.Name.Split('_')[0]);
                     InkPage ip = new InkPage(pageID);
+
+                   // AsyncHelpers.RunSync(() => ip.loadAsync());
                     await ip.loadAsync();
-                    pageBuffers.Add(ip);
+                    pageBuffers.Add(pageID, ip);
+                    numPages++;
 
                 }
+
             }
+
+
 
             if (pageBuffers.Count > 0)
             {
-                last_page = num_pages - 1;
+                // TODO not needed?
+                last_page = numPages - 1;
 
 
-                replaceCanvas();
                 // load 0_Page.gif
                 // load_ink(cur_page.ToString() + page_file_name);
             } // else last_page=0, which is the current blank page
+            else
+            {
+                pageBuffers.Add(0,new InkPage(0));
+            }
+            replaceCanvas(pageBuffers[0]);
 
 
         }
@@ -286,15 +300,23 @@ namespace GettingStarted_Ink
         private async void PrintButtonClick(object sender, RoutedEventArgs e)
         {
 
+            write_buffers(); // TODO temp
+
             printHelper.ResetElements();
 
 
             //save_ink(cur_page.ToString() + page_file_name);
 
 
-            go_to_page(2);
+            //go_to_page(2);
 
-            printHelper.AddElement(await bitMapHelper.UIElementToGridImage(_PageCanvas));
+
+            foreach(var inkPage in pageBuffers)
+            {
+                printHelper.AddElement(
+                    await bitMapHelper.UIElementToGridImage(inkPage.Value._grid)
+                    );
+            }
 
 
 

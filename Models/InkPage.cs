@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage.Streams;
+using Windows.UI;
 using Windows.UI.Input.Inking;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 
 namespace GettingStarted_Ink.Models
 {
@@ -25,7 +27,7 @@ namespace GettingStarted_Ink.Models
         // e.g. 0,1,2,3...
         // "Special" pages: <0
         // E.g. blank page is -1
-        int _pageID;
+        public int _pageID { get;set; }
 
 
 
@@ -37,13 +39,20 @@ namespace GettingStarted_Ink.Models
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Stretch,
                 Width = 620,
-                Height = 800
+                Height = 800,
+                BorderBrush=new SolidColorBrush(Colors.Black),
+                BorderThickness=new Thickness(1),
+                Background= new SolidColorBrush(Colors.Beige)
             };
 
-            _grid.Children.Add(new InkCanvas());
+            var inkCanvas = new InkCanvas();
+            inkCanvas.InkPresenter.InputDeviceTypes =
+                    Windows.UI.Core.CoreInputDeviceTypes.Mouse |
+                    Windows.UI.Core.CoreInputDeviceTypes.Pen;
+            _grid.Children.Add(inkCanvas);
         }
 
-        private InkCanvas GetInkCanvas()
+        public InkCanvas GetInkCanvas()
         {
             return _grid.Children.OfType<InkCanvas>().First();
         }
@@ -153,5 +162,13 @@ namespace GettingStarted_Ink.Models
         }
 
 
+    }
+
+    class InkPageComparer : Comparer<InkPage>
+    {
+        public override int Compare(InkPage x, InkPage y)
+        {
+            return x._pageID.CompareTo(y._pageID);
+        }
     }
 }
