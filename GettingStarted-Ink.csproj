@@ -94,6 +94,7 @@
     <Compile Include="BlankPage1.xaml.cs">
       <DependentUpon>BlankPage1.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\InkPage.cs" />
     <Compile Include="Tools\BitMapHelper.cs" />
     <Compile Include="Tools\PrintHelper.cs" />
     <Compile Include="MainPage.xaml.cs">

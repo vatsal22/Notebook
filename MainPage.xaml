@@ -55,15 +55,17 @@ THE SOFTWARE.
 
                 </Grid.RowDefinitions>
 
-                <Border  x:Name="_PageCanvas" Grid.Row="1" Grid.Column="1" BorderThickness="2" Background="Azure" BorderBrush="Black">
-                    <Grid x:Name="_Grid">
+
+
+                <Grid  x:Name="_PageCanvas"
+                       Grid.Row="1" Grid.Column="1"
+                           BorderBrush="Black" BorderThickness="1"
+                           Background="Beige">
                         <InkCanvas x:Name="inkCanvas2" />
                         <InkCanvas x:Name="inkCanvas" />
 
                     </Grid>
-
-                </Border>
-
+                
                 <Button Grid.Row="1"
                         Grid.Column="2"
                         HorizontalAlignment="Center"
